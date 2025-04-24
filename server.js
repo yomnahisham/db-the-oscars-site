@@ -13,7 +13,9 @@ BigInt.prototype.toJSON = function() {
 
 const prisma = new PrismaClient();
 const app = express();
-const PORT = process.env.PORT || 3012;
+
+// Use the PORT from environment variables, defaulting to 3000 for Render compatibility
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
@@ -2241,5 +2243,7 @@ app.get('/api/movie-crew-raw', async (req, res) => {
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log(`Database URL: ${process.env.DATABASE_URL ? 'Set' : 'Not set'}`);
 }); 
