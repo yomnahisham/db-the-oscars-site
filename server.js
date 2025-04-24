@@ -535,491 +535,495 @@ app.get('/api/person-stats/:personId', async (req, res) => {
 
 // Helper function to normalize country names
 function normalizeCountryName(country) {
-  if (!country) return null;
-  
-  // First remove all text in parentheses
-  let cleanedCountry = country.replace(/\s*\([^)]*\)/g, '');
-  
-  // Convert to lowercase for comparison and remove trailing/leading spaces
-  let lowerCountry = cleanedCountry.toLowerCase().trim();
-  
-  // Remove brackets and other annotations
-  lowerCountry = lowerCountry.replace(/\s*\[[^\]]*\]/g, '');
-  
-  // Clean up any special labels
-  lowerCountry = lowerCountry.replace(/unreliablesource/g, '');
-  lowerCountry = lowerCountry.replace(/disputed/g, '');
-  lowerCountry = lowerCountry.replace(/both/g, '');
-  
-  // Trim again after cleaning
-  lowerCountry = lowerCountry.trim();
-  
-  // Early detection - if it's any form of U.S. by itself
-  if (/^u\.?\s*s\.?\.?$/i.test(lowerCountry) || 
-      /^usa$/i.test(lowerCountry) || 
-      /^u\.?\s*s\.?\.?a\.?$/i.test(lowerCountry) ||
-      /^united\s+states(\s+of\s+america)?$/i.test(lowerCountry) ||
-      /^america$/i.test(lowerCountry)) {
-    return 'United States';
-  }
-  
-  // Check for state/city + country format
-  const usStates = [
-    'alabama', 'alaska', 'arizona', 'arkansas', 'california', 'colorado', 'connecticut', 
-    'delaware', 'florida', 'georgia', 'hawaii', 'idaho', 'illinois', 'indiana', 'iowa', 
-    'kansas', 'kentucky', 'louisiana', 'maine', 'maryland', 'massachusetts', 'michigan', 
-    'minnesota', 'mississippi', 'missouri', 'montana', 'nebraska', 'nevada', 'new hampshire', 
-    'new jersey', 'new mexico', 'new york', 'north carolina', 'north dakota', 'ohio', 'oklahoma', 
-    'oregon', 'pennsylvania', 'rhode island', 'south carolina', 'south dakota', 'tennessee', 
-    'texas', 'utah', 'vermont', 'virginia', 'washington', 'west virginia', 'wisconsin', 'wyoming'
-  ];
-  
-  // Check for US state abbreviations
-  const stateAbbreviations = [
-    'al', 'ak', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', 'hi', 'id', 'il', 'in', 'ia',
-    'ks', 'ky', 'la', 'me', 'md', 'ma', 'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj',
-    'nm', 'ny', 'nc', 'nd', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', 'sd', 'tn', 'tx', 'ut', 'vt',
-    'va', 'wa', 'wv', 'wi', 'wy', 'dc'
-  ];
-  
-  // Major US cities
-  const usCities = [
-    'new york city', 'los angeles', 'chicago', 'houston', 'phoenix', 'philadelphia', 
-    'san antonio', 'san diego', 'dallas', 'san jose', 'austin', 'jacksonville', 
-    'san francisco', 'columbus', 'fort worth', 'charlotte', 'detroit', 
-    'el paso', 'memphis', 'seattle', 'denver', 'washington dc', 'boston', 'nashville', 
-    'baltimore', 'hollywood', 'miami', 'portland', 'las vegas', 'atlanta'
-  ];
-  
-  // US region variations regex
-  const usVariationsRegex = /\b(u\.?\s*s\.?\.?a?\.?|united\s+states(\s+of\s+america)?|america)\b/i;
-  
-  // Check if the string contains both a US state/city and a US variant
-  // First split by commas
-  const parts = lowerCountry.split(/,\s*/);
-  
-  // Check if any part is a state or city
-  let hasStateOrCity = false;
-  for (const part of parts) {
-    if (usStates.includes(part) || 
-        stateAbbreviations.includes(part) || 
-        usCities.includes(part) ||
-        usCities.some(city => part.includes(city))) {
-      hasStateOrCity = true;
-      break;
+    if (!country) return null;
+    
+    // First remove any text in parentheses
+    let cleanedCountry = country.replace(/\s*\([^)]*\)/g, '');
+    
+    // Convert to lowercase for comparison and remove trailing/leading spaces
+    let lowerCountry = cleanedCountry.toLowerCase().trim();
+    
+    // Remove brackets and other annotations
+    lowerCountry = lowerCountry.replace(/\s*\[[^\]]*\]/g, '');
+    
+    // Clean up any special labels
+    lowerCountry = lowerCountry.replace(/unreliablesource/g, '');
+    lowerCountry = lowerCountry.replace(/disputed/g, '');
+    lowerCountry = lowerCountry.replace(/both/g, '');
+    
+    // Keep only words (ignore digits) and normalize spaces
+    lowerCountry = lowerCountry.replace(/\d+/g, ''); // Remove all digits
+    lowerCountry = lowerCountry.replace(/\s+/g, ' '); // Normalize spaces
+    
+    // Trim again after cleaning
+    lowerCountry = lowerCountry.trim();
+    
+    // Early detection - if it's any form of U.S. by itself
+    if (/^u\.?\s*s\.?\.?$/i.test(lowerCountry) || 
+        /^usa$/i.test(lowerCountry) || 
+        /^u\.?\s*s\.?\.?a\.?$/i.test(lowerCountry) ||
+        /^united\s+states(\s+of\s+america)?$/i.test(lowerCountry) ||
+        /^america$/i.test(lowerCountry)) {
+        return 'United States';
     }
-  }
-  
-  // Check if any part is a US variation
-  let hasUSVariation = false;
-  for (const part of parts) {
-    if (usVariationsRegex.test(part)) {
-      hasUSVariation = true;
-      break;
+    
+    // Check for state/city + country format
+    const usStates = [
+        'alabama', 'alaska', 'arizona', 'arkansas', 'california', 'colorado', 'connecticut', 
+        'delaware', 'florida', 'georgia', 'hawaii', 'idaho', 'illinois', 'indiana', 'iowa', 
+        'kansas', 'kentucky', 'louisiana', 'maine', 'maryland', 'massachusetts', 'michigan', 
+        'minnesota', 'mississippi', 'missouri', 'montana', 'nebraska', 'nevada', 'new hampshire', 
+        'new jersey', 'new mexico', 'new york', 'north carolina', 'north dakota', 'ohio', 'oklahoma', 
+        'oregon', 'pennsylvania', 'rhode island', 'south carolina', 'south dakota', 'tennessee', 
+        'texas', 'utah', 'vermont', 'virginia', 'washington', 'west virginia', 'wisconsin', 'wyoming'
+    ];
+    
+    // Check for US state abbreviations
+    const stateAbbreviations = [
+        'al', 'ak', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', 'hi', 'id', 'il', 'in', 'ia',
+        'ks', 'ky', 'la', 'me', 'md', 'ma', 'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj',
+        'nm', 'ny', 'nc', 'nd', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', 'sd', 'tn', 'tx', 'ut', 'vt',
+        'va', 'wa', 'wv', 'wi', 'wy', 'dc'
+    ];
+    
+    // Major US cities
+    const usCities = [
+        'new york city', 'los angeles', 'chicago', 'houston', 'phoenix', 'philadelphia', 
+        'san antonio', 'san diego', 'dallas', 'san jose', 'austin', 'jacksonville', 
+        'san francisco', 'columbus', 'fort worth', 'charlotte', 'detroit', 
+        'el paso', 'memphis', 'seattle', 'denver', 'washington dc', 'boston', 'nashville', 
+        'baltimore', 'hollywood', 'miami', 'portland', 'las vegas', 'atlanta'
+    ];
+    
+    // US region variations regex
+    const usVariationsRegex = /\b(u\.?\s*s\.?\.?a?\.?|united\s+states(\s+of\s+america)?|america)\b/i;
+    
+    // Check if the string contains both a US state/city and a US variant
+    // First split by commas
+    const parts = lowerCountry.split(/,\s*/);
+    
+    // Check if any part is a state or city
+    let hasStateOrCity = false;
+    for (const part of parts) {
+        if (usStates.includes(part) || 
+            stateAbbreviations.includes(part) || 
+            usCities.includes(part) ||
+            usCities.some(city => part.includes(city))) {
+            hasStateOrCity = true;
+            break;
+        }
     }
-  }
-  
-  // If we have both a US state/city and a US variation, it's definitely US
-  if (hasStateOrCity && hasUSVariation) {
-    return 'United States';
-  }
-  
-  // Even if we just have a US state or city by itself, it's US
-  if (hasStateOrCity) {
-    return 'United States';
-  }
-  
-  // Also check the whole string for US state/city patterns
-  for (const state of usStates) {
-    if (lowerCountry.includes(state)) {
-      return 'United States';
+    
+    // Check if any part is a US variation
+    let hasUSVariation = false;
+    for (const part of parts) {
+        if (usVariationsRegex.test(part)) {
+            hasUSVariation = true;
+            break;
+        }
     }
-  }
-  
-  for (const city of usCities) {
-    if (lowerCountry.includes(city)) {
-      return 'United States';
+    
+    // If we have both a US state/city and a US variation, it's definitely US
+    if (hasStateOrCity && hasUSVariation) {
+        return 'United States';
     }
-  }
-  
-  // Map of country variations to normalized names for other countries
-  const countryMap = {
-    // United States variations
-    'u.s.': 'United States',
-    'u.s. (both': 'United States',
-    'u. s.': 'United States',
-    'u.s.unreliable source': 'United States',
-    'us (disputed': 'United States',
-    'u.s': 'United States',
-    'us': 'United States',
-    'usa': 'United States',
-    'u.s.a': 'United States',
-    'u.s.a.': 'United States',
-    'united states of america': 'United States',
-    'america': 'United States',
-    'united states': 'United States',
-    'united states of america': 'United States',
     
-    // United Kingdom variations
-    'uk': 'United Kingdom',
-    'u.k.': 'United Kingdom',
-    'great britain': 'United Kingdom',
-    'england': 'United Kingdom',
-    'britain': 'United Kingdom',
-    'scotland': 'United Kingdom',
-    'wales': 'United Kingdom',
-    'northern ireland': 'United Kingdom',
-    'london': 'United Kingdom',
-    'manchester': 'United Kingdom',
-    'liverpool': 'United Kingdom',
-    'birmingham': 'United Kingdom',
-    'edinburgh': 'United Kingdom',
-    'glasgow': 'United Kingdom',
-    'cardiff': 'United Kingdom',
-    'belfast': 'United Kingdom',
-    
-    // Russia/Soviet Union
-    'ussr': 'Russia',
-    'soviet union': 'Russia',
-    'u.s.s.r': 'Russia',
-    'u.s.s.r.': 'Russia',
-    'sssr': 'Russia',
-    'russian federation': 'Russia',
-    'moscow': 'Russia',
-    'st petersburg': 'Russia',
-    'saint petersburg': 'Russia',
-    
-    // Other common historical changes
-    'west germany': 'Germany',
-    'east germany': 'Germany',
-    'federal republic of germany': 'Germany',
-    'german democratic republic': 'Germany',
-    'nazi germany': 'Germany',
-    'third reich': 'Germany',
-    'weimar republic': 'Germany',
-    'german empire': 'Germany',
-    'prussia': 'Germany',
-    'berlin': 'Germany',
-    'munich': 'Germany',
-    'hamburg': 'Germany',
-    
-    // Yugoslavia and successor states
-    'yugoslavia': 'Yugoslavia',
-    'kingdom of yugoslavia': 'Yugoslavia',
-    'sfr yugoslavia': 'Yugoslavia',
-    'socialist federal republic of yugoslavia': 'Yugoslavia',
-    'federal republic of yugoslavia': 'Yugoslavia',
-    
-    // Serbia variations
-    'republic of serbia': 'Serbia',
-    'serbia and montenegro': 'Serbia',
-    'belgrade': 'Serbia',
-    
-    // Croatia
-    'republic of croatia': 'Croatia',
-    'zagreb': 'Croatia',
-    
-    // Slovenia
-    'republic of slovenia': 'Slovenia',
-    'ljubljana': 'Slovenia',
-    
-    // Bosnia and Herzegovina
-    'bosnia': 'Bosnia and Herzegovina',
-    'republika srpska': 'Bosnia and Herzegovina',
-    'sarajevo': 'Bosnia and Herzegovina',
-    
-    // North Macedonia
-    'macedonia': 'North Macedonia',
-    'former yugoslav republic of macedonia': 'North Macedonia',
-    'fyrom': 'North Macedonia',
-    'skopje': 'North Macedonia',
-    
-    // Kosovo
-    'republic of kosovo': 'Kosovo',
-    'pristina': 'Kosovo',
-    
-    // Montenegro
-    'republic of montenegro': 'Montenegro',
-    'podgorica': 'Montenegro',
-    
-    // Czechoslovakia and successor states
-    'czechoslovakia': 'Czechoslovakia',
-    'czech republic': 'Czech Republic',
-    'czechia': 'Czech Republic',
-    'bohemia': 'Czech Republic',
-    'prague': 'Czech Republic',
-    'slovakia': 'Slovakia',
-    'bratislava': 'Slovakia',
-    
-    // Palestine/Israel
-    'palestine': 'Palestine',
-    'mand. palestine': 'Palestine',
-    'mandatory palestine': 'Palestine',
-    'palestinian territories': 'Palestine',
-    'west bank': 'Palestine',
-    'gaza': 'Palestine',
-    'gaza strip': 'Palestine',
-    'ramallah': 'Palestine',
-    
-    'israel': 'Israel',
-    'state of israel': 'Israel',
-    'tel aviv': 'Israel',
-    'jerusalem': 'Israel',
-    
-    // Historical Persia/Iran
-    'persia': 'Iran',
-    'tehran': 'Iran',
-    'islamic republic of iran': 'Iran',
-    
-    // Historical Burma/Myanmar
-    'burma': 'Myanmar',
-    'rangoon': 'Myanmar',
-    'yangon': 'Myanmar',
-    
-    // Historical Siam/Thailand
-    'siam': 'Thailand',
-    'bangkok': 'Thailand',
-    'kingdom of thailand': 'Thailand',
-    
-    // Netherlands/Holland
-    'holland': 'Netherlands',
-    'the netherlands': 'Netherlands',
-    'kingdom of the netherlands': 'Netherlands',
-    'amsterdam': 'Netherlands',
-    'rotterdam': 'Netherlands',
-    'the hague': 'Netherlands',
-    
-    // European Variations
-    'republic of ireland': 'Ireland',
-    'eire': 'Ireland',
-    'dublin': 'Ireland',
-    
-    'spanish state': 'Spain',
-    'kingdom of spain': 'Spain',
-    'madrid': 'Spain',
-    'barcelona': 'Spain',
-    
-    'portuguese republic': 'Portugal',
-    'lisbon': 'Portugal',
-    'porto': 'Portugal',
-    
-    'french republic': 'France',
-    'paris': 'France',
-    'lyon': 'France',
-    'marseille': 'France',
-    
-    'italian republic': 'Italy',
-    'kingdom of italy': 'Italy',
-    'rome': 'Italy',
-    'milan': 'Italy',
-    'naples': 'Italy',
-    'turin': 'Italy',
-    'florence': 'Italy',
-    'venice': 'Italy',
-    
-    'swiss confederation': 'Switzerland',
-    'helvetic republic': 'Switzerland',
-    'zurich': 'Switzerland',
-    'geneva': 'Switzerland',
-    'bern': 'Switzerland',
-    
-    'kingdom of belgium': 'Belgium',
-    'belgian': 'Belgium',
-    'brussels': 'Belgium',
-    'antwerp': 'Belgium',
-    
-    'hellenic republic': 'Greece',
-    'athens': 'Greece',
-    'thessaloniki': 'Greece',
-    
-    'republic of austria': 'Austria',
-    'vienna': 'Austria',
-    'austro-hungarian empire': 'Austria',
-    'austro-hungarian': 'Austria',
-    'habsburg monarchy': 'Austria',
-    
-    'kingdom of sweden': 'Sweden',
-    'stockholm': 'Sweden',
-    
-    'kingdom of norway': 'Norway',
-    'oslo': 'Norway',
-    
-    'kingdom of denmark': 'Denmark',
-    'copenhagen': 'Denmark',
-    
-    'republic of finland': 'Finland',
-    'helsinki': 'Finland',
-    
-    'republic of poland': 'Poland',
-    'polish people\'s republic': 'Poland',
-    'warsaw': 'Poland',
-    'krakow': 'Poland',
-    
-    'republic of hungary': 'Hungary',
-    'budapest': 'Hungary',
-    
-    'republic of turkey': 'Turkey',
-    'ottoman empire': 'Turkey',
-    'istanbul': 'Turkey',
-    'constantinople': 'Turkey',
-    'ankara': 'Turkey',
-    
-    // Asian countries
-    'people\'s republic of china': 'China',
-    'prc': 'China',
-    'republic of china': 'Taiwan',
-    'beijing': 'China',
-    'shanghai': 'China',
-    'hong kong': 'China',
-    'mainland china': 'China',
-    
-    'state of japan': 'Japan',
-    'nippon': 'Japan',
-    'tokyo': 'Japan',
-    'osaka': 'Japan',
-    'kyoto': 'Japan',
-    
-    'republic of korea': 'South Korea',
-    'south korea': 'South Korea',
-    'seoul': 'South Korea',
-    'democratic people\'s republic of korea': 'North Korea',
-    'north korea': 'North Korea',
-    'pyongyang': 'North Korea',
-    
-    'republic of india': 'India',
-    'delhi': 'India',
-    'mumbai': 'India',
-    'bombay': 'India',
-    'calcutta': 'India',
-    'kolkata': 'India',
-    
-    'islamic republic of pakistan': 'Pakistan',
-    'karachi': 'Pakistan',
-    'lahore': 'Pakistan',
-    'islamabad': 'Pakistan',
-    
-    'republic of the philippines': 'Philippines',
-    'manila': 'Philippines',
-    
-    'republic of indonesia': 'Indonesia',
-    'jakarta': 'Indonesia',
-    
-    'kingdom of thailand': 'Thailand',
-    'siam': 'Thailand',
-    'bangkok': 'Thailand',
-    
-    'republic of singapore': 'Singapore',
-    
-    'malaysia': 'Malaysia',
-    'kuala lumpur': 'Malaysia',
-    
-    'socialist republic of vietnam': 'Vietnam',
-    'hanoi': 'Vietnam',
-    'ho chi minh city': 'Vietnam',
-    'saigon': 'Vietnam',
-    
-    // African countries
-    'arab republic of egypt': 'Egypt',
-    'cairo': 'Egypt',
-    'alexandria': 'Egypt',
-    
-    'federal republic of nigeria': 'Nigeria',
-    'lagos': 'Nigeria',
-    'abuja': 'Nigeria',
-    
-    'republic of south africa': 'South Africa',
-    'pretoria': 'South Africa',
-    'cape town': 'South Africa',
-    'johannesburg': 'South Africa',
-    
-    'kingdom of morocco': 'Morocco',
-    'rabat': 'Morocco',
-    'casablanca': 'Morocco',
-    
-    'federal democratic republic of ethiopia': 'Ethiopia',
-    'addis ababa': 'Ethiopia',
-    
-    'republic of kenya': 'Kenya',
-    'nairobi': 'Kenya',
-    
-    'republic of algeria': 'Algeria',
-    'algiers': 'Algeria',
-    
-    // Americas
-    'canada': 'Canada',
-    'dominion of canada': 'Canada',
-    'toronto': 'Canada',
-    'montreal': 'Canada',
-    'vancouver': 'Canada',
-    'ottawa': 'Canada',
-    
-    'united mexican states': 'Mexico',
-    'mexican republic': 'Mexico',
-    'mexico city': 'Mexico',
-    'guadalajara': 'Mexico',
-    
-    'republic of colombia': 'Colombia',
-    'bogota': 'Colombia',
-    
-    'republic of brazil': 'Brazil',
-    'brasilia': 'Brazil',
-    'rio de janeiro': 'Brazil',
-    'sao paulo': 'Brazil',
-    
-    'republic of argentina': 'Argentina',
-    'buenos aires': 'Argentina',
-    
-    'republic of chile': 'Chile',
-    'santiago': 'Chile',
-    
-    'republic of cuba': 'Cuba',
-    'havana': 'Cuba',
-    
-    'commonwealth of australia': 'Australia',
-    'sydney': 'Australia',
-    'melbourne': 'Australia',
-    'canberra': 'Australia',
-    
-    'new zealand': 'New Zealand',
-    'auckland': 'New Zealand',
-    'wellington': 'New Zealand'
-  };
-  
-  // Check for historical prefixes and suffixes that should be removed
-  const prefixesToRemove = [
-    'republic of', 'democratic republic of', 'people\'s republic of', 'socialist republic of',
-    'federal republic of', 'federation of', 'kingdom of', 'principality of',
-    'commonwealth of', 'grand duchy of', 'sultanate of', 'islamic republic of',
-    'state of', 'united states of', 'united kingdom of', 'empire of', 'union of'
-  ];
-  
-  // Extract the core country name by removing prefixes
-  let coreCountry = lowerCountry;
-  for (const prefix of prefixesToRemove) {
-    if (coreCountry.startsWith(prefix + ' ')) {
-      coreCountry = coreCountry.substring(prefix.length + 1);
-      break;
+    // Even if we just have a US state or city by itself, it's US
+    if (hasStateOrCity) {
+        return 'United States';
     }
-  }
-  
-  // Try to match with both the original name and the core name
-  if (countryMap[lowerCountry]) {
-    return countryMap[lowerCountry];
-  }
-  
-  if (countryMap[coreCountry]) {
-    return countryMap[coreCountry];
-  }
-  
-  // Look for partial matches in the country name
-  for (const [variant, normalized] of Object.entries(countryMap)) {
-    if (lowerCountry.includes(variant)) {
-      return normalized;
+    
+    // Also check the whole string for US state/city patterns
+    for (const state of usStates) {
+        if (lowerCountry.includes(state)) {
+            return 'United States';
+        }
     }
-  }
-  
-  // If no match is found, return the original cleaned country
-  return cleanedCountry.trim();
+    
+    for (const city of usCities) {
+        if (lowerCountry.includes(city)) {
+            return 'United States';
+        }
+    }
+    
+    // Map of country variations to normalized names for other countries
+    const countryMap = {
+        // United States variations
+        'u.s.': 'United States',
+        'u.s. (both': 'United States',
+        'u. s.': 'United States',
+        'u.s.unreliable source': 'United States',
+        'us (disputed': 'United States',
+        'u.s': 'United States',
+        'us': 'United States',
+        'usa': 'United States',
+        'u.s.a': 'United States',
+        'u.s.a.': 'United States',
+        'united states of america': 'United States',
+        'america': 'United States',
+        'united states': 'United States',
+        'united states of america': 'United States',
+        
+        // United Kingdom variations
+        'uk': 'United Kingdom',
+        'u.k.': 'United Kingdom',
+        'great britain': 'United Kingdom',
+        'england': 'United Kingdom',
+        'britain': 'United Kingdom',
+        'scotland': 'United Kingdom',
+        'wales': 'United Kingdom',
+        'northern ireland': 'United Kingdom',
+        'london': 'United Kingdom',
+        'manchester': 'United Kingdom',
+        'liverpool': 'United Kingdom',
+        'birmingham': 'United Kingdom',
+        'edinburgh': 'United Kingdom',
+        'glasgow': 'United Kingdom',
+        'cardiff': 'United Kingdom',
+        'belfast': 'United Kingdom',
+        
+        // Russia/Soviet Union
+        'ussr': 'Russia',
+        'soviet union': 'Russia',
+        'u.s.s.r': 'Russia',
+        'u.s.s.r.': 'Russia',
+        'sssr': 'Russia',
+        'russian federation': 'Russia',
+        'moscow': 'Russia',
+        'st petersburg': 'Russia',
+        'saint petersburg': 'Russia',
+        
+        // Other common historical changes
+        'west germany': 'Germany',
+        'east germany': 'Germany',
+        'federal republic of germany': 'Germany',
+        'german democratic republic': 'Germany',
+        'nazi germany': 'Germany',
+        'third reich': 'Germany',
+        'weimar republic': 'Germany',
+        'german empire': 'Germany',
+        'prussia': 'Germany',
+        'berlin': 'Germany',
+        'munich': 'Germany',
+        'hamburg': 'Germany',
+        
+        // Yugoslavia and successor states
+        'yugoslavia': 'Yugoslavia',
+        'kingdom of yugoslavia': 'Yugoslavia',
+        'sfr yugoslavia': 'Yugoslavia',
+        'socialist federal republic of yugoslavia': 'Yugoslavia',
+        'federal republic of yugoslavia': 'Yugoslavia',
+        
+        // Serbia variations
+        'republic of serbia': 'Serbia',
+        'serbia and montenegro': 'Serbia',
+        'belgrade': 'Serbia',
+        
+        // Croatia
+        'republic of croatia': 'Croatia',
+        'zagreb': 'Croatia',
+        
+        // Slovenia
+        'republic of slovenia': 'Slovenia',
+        'ljubljana': 'Slovenia',
+        
+        // Bosnia and Herzegovina
+        'bosnia': 'Bosnia and Herzegovina',
+        'republika srpska': 'Bosnia and Herzegovina',
+        'sarajevo': 'Bosnia and Herzegovina',
+        
+        // North Macedonia
+        'macedonia': 'North Macedonia',
+        'former yugoslav republic of macedonia': 'North Macedonia',
+        'fyrom': 'North Macedonia',
+        'skopje': 'North Macedonia',
+        
+        // Kosovo
+        'republic of kosovo': 'Kosovo',
+        'pristina': 'Kosovo',
+        
+        // Montenegro
+        'republic of montenegro': 'Montenegro',
+        'podgorica': 'Montenegro',
+        
+        // Czechoslovakia and successor states
+        'czechoslovakia': 'Czechoslovakia',
+        'czech republic': 'Czech Republic',
+        'czechia': 'Czech Republic',
+        'bohemia': 'Czech Republic',
+        'prague': 'Czech Republic',
+        'slovakia': 'Slovakia',
+        'bratislava': 'Slovakia',
+        
+        // Palestine/Israel
+        'palestine': 'Palestine',
+        'mand. palestine': 'Palestine',
+        'mandatory palestine': 'Palestine',
+        'palestinian territories': 'Palestine',
+        'west bank': 'Palestine',
+        'gaza': 'Palestine',
+        'gaza strip': 'Palestine',
+        'ramallah': 'Palestine',
+        
+        'israel': 'Israel',
+        'state of israel': 'Israel',
+        'tel aviv': 'Israel',
+        'jerusalem': 'Israel',
+        
+        // Historical Persia/Iran
+        'persia': 'Iran',
+        'tehran': 'Iran',
+        'islamic republic of iran': 'Iran',
+        
+        // Historical Burma/Myanmar
+        'burma': 'Myanmar',
+        'rangoon': 'Myanmar',
+        'yangon': 'Myanmar',
+        
+        // Historical Siam/Thailand
+        'siam': 'Thailand',
+        'bangkok': 'Thailand',
+        'kingdom of thailand': 'Thailand',
+        
+        // Netherlands/Holland
+        'holland': 'Netherlands',
+        'the netherlands': 'Netherlands',
+        'kingdom of the netherlands': 'Netherlands',
+        'amsterdam': 'Netherlands',
+        'rotterdam': 'Netherlands',
+        'the hague': 'Netherlands',
+        
+        // European Variations
+        'republic of ireland': 'Ireland',
+        'eire': 'Ireland',
+        'dublin': 'Ireland',
+        
+        'spanish state': 'Spain',
+        'kingdom of spain': 'Spain',
+        'madrid': 'Spain',
+        'barcelona': 'Spain',
+        
+        'portuguese republic': 'Portugal',
+        'lisbon': 'Portugal',
+        'porto': 'Portugal',
+        
+        'french republic': 'France',
+        'paris': 'France',
+        'lyon': 'France',
+        'marseille': 'France',
+        
+        'italian republic': 'Italy',
+        'kingdom of italy': 'Italy',
+        'rome': 'Italy',
+        'milan': 'Italy',
+        'naples': 'Italy',
+        'turin': 'Italy',
+        'florence': 'Italy',
+        'venice': 'Italy',
+        
+        'swiss confederation': 'Switzerland',
+        'helvetic republic': 'Switzerland',
+        'zurich': 'Switzerland',
+        'geneva': 'Switzerland',
+        'bern': 'Switzerland',
+        
+        'kingdom of belgium': 'Belgium',
+        'belgian': 'Belgium',
+        'brussels': 'Belgium',
+        'antwerp': 'Belgium',
+        
+        'hellenic republic': 'Greece',
+        'athens': 'Greece',
+        'thessaloniki': 'Greece',
+        
+        'republic of austria': 'Austria',
+        'vienna': 'Austria',
+        'austro-hungarian empire': 'Austria',
+        'austro-hungarian': 'Austria',
+        'habsburg monarchy': 'Austria',
+        
+        'kingdom of sweden': 'Sweden',
+        'stockholm': 'Sweden',
+        
+        'kingdom of norway': 'Norway',
+        'oslo': 'Norway',
+        
+        'kingdom of denmark': 'Denmark',
+        'copenhagen': 'Denmark',
+        
+        'republic of finland': 'Finland',
+        'helsinki': 'Finland',
+        
+        'republic of poland': 'Poland',
+        'polish people\'s republic': 'Poland',
+        'warsaw': 'Poland',
+        'krakow': 'Poland',
+        
+        'republic of hungary': 'Hungary',
+        'budapest': 'Hungary',
+        
+        'republic of turkey': 'Turkey',
+        'ottoman empire': 'Turkey',
+        'istanbul': 'Turkey',
+        'constantinople': 'Turkey',
+        'ankara': 'Turkey',
+        
+        // Asian countries
+        'people\'s republic of china': 'China',
+        'prc': 'China',
+        'republic of china': 'Taiwan',
+        'beijing': 'China',
+        'shanghai': 'China',
+        'hong kong': 'China',
+        'mainland china': 'China',
+        
+        'state of japan': 'Japan',
+        'nippon': 'Japan',
+        'tokyo': 'Japan',
+        'osaka': 'Japan',
+        'kyoto': 'Japan',
+        
+        'republic of korea': 'South Korea',
+        'south korea': 'South Korea',
+        'seoul': 'South Korea',
+        'democratic people\'s republic of korea': 'North Korea',
+        'north korea': 'North Korea',
+        'pyongyang': 'North Korea',
+        
+        'republic of india': 'India',
+        'delhi': 'India',
+        'mumbai': 'India',
+        'bombay': 'India',
+        'calcutta': 'India',
+        'kolkata': 'India',
+        
+        'islamic republic of pakistan': 'Pakistan',
+        'karachi': 'Pakistan',
+        'lahore': 'Pakistan',
+        'islamabad': 'Pakistan',
+        
+        'republic of the philippines': 'Philippines',
+        'manila': 'Philippines',
+        
+        'republic of indonesia': 'Indonesia',
+        'jakarta': 'Indonesia',
+        
+        'kingdom of thailand': 'Thailand',
+        'siam': 'Thailand',
+        'bangkok': 'Thailand',
+        
+        'republic of singapore': 'Singapore',
+        
+        'malaysia': 'Malaysia',
+        'kuala lumpur': 'Malaysia',
+        
+        'socialist republic of vietnam': 'Vietnam',
+        'hanoi': 'Vietnam',
+        'ho chi minh city': 'Vietnam',
+        'saigon': 'Vietnam',
+        
+        // African countries
+        'arab republic of egypt': 'Egypt',
+        'cairo': 'Egypt',
+        'alexandria': 'Egypt',
+        
+        'federal republic of nigeria': 'Nigeria',
+        'lagos': 'Nigeria',
+        'abuja': 'Nigeria',
+        
+        'republic of south africa': 'South Africa',
+        'pretoria': 'South Africa',
+        'cape town': 'South Africa',
+        'johannesburg': 'South Africa',
+        
+        'kingdom of morocco': 'Morocco',
+        'rabat': 'Morocco',
+        'casablanca': 'Morocco',
+        
+        'federal democratic republic of ethiopia': 'Ethiopia',
+        'addis ababa': 'Ethiopia',
+        
+        'republic of kenya': 'Kenya',
+        'nairobi': 'Kenya',
+        
+        'republic of algeria': 'Algeria',
+        'algiers': 'Algeria',
+        
+        // Americas
+        'canada': 'Canada',
+        'dominion of canada': 'Canada',
+        'toronto': 'Canada',
+        'montreal': 'Canada',
+        'vancouver': 'Canada',
+        'ottawa': 'Canada',
+        
+        'united mexican states': 'Mexico',
+        'mexican republic': 'Mexico',
+        'mexico city': 'Mexico',
+        'guadalajara': 'Mexico',
+        
+        'republic of colombia': 'Colombia',
+        'bogota': 'Colombia',
+        
+        'republic of brazil': 'Brazil',
+        'brasilia': 'Brazil',
+        'rio de janeiro': 'Brazil',
+        'sao paulo': 'Brazil',
+        
+        'republic of argentina': 'Argentina',
+        'buenos aires': 'Argentina',
+        
+        'republic of chile': 'Chile',
+        'santiago': 'Chile',
+        
+        'republic of cuba': 'Cuba',
+        'havana': 'Cuba',
+        
+        'commonwealth of australia': 'Australia',
+        'sydney': 'Australia',
+        'melbourne': 'Australia',
+        'canberra': 'Australia',
+        
+        'new zealand': 'New Zealand',
+        'auckland': 'New Zealand',
+        'wellington': 'New Zealand'
+    };
+    
+    // Check for historical prefixes and suffixes that should be removed
+    const prefixesToRemove = [
+        'republic of', 'democratic republic of', 'people\'s republic of', 'socialist republic of',
+        'federal republic of', 'federation of', 'kingdom of', 'principality of',
+        'commonwealth of', 'grand duchy of', 'sultanate of', 'islamic republic of',
+        'state of', 'united states of', 'united kingdom of', 'empire of', 'union of'
+    ];
+    
+    // Extract the core country name by removing prefixes
+    let coreCountry = lowerCountry;
+    for (const prefix of prefixesToRemove) {
+        if (coreCountry.startsWith(prefix + ' ')) {
+            coreCountry = coreCountry.substring(prefix.length + 1);
+            break;
+        }
+    }
+    
+    // Try to match with both the original name and the core name
+    if (countryMap[lowerCountry]) {
+        return countryMap[lowerCountry];
+    }
+    
+    if (countryMap[coreCountry]) {
+        return countryMap[coreCountry];
+    }
+    
+    // Look for partial matches in the country name
+    for (const [variant, normalized] of Object.entries(countryMap)) {
+        if (lowerCountry.includes(variant)) {
+            return normalized;
+        }
+    }
+    
+    // If no match is found, return the original cleaned country
+    return cleanedCountry.trim();
 }
 
 // Normalize countries in the database
@@ -1145,12 +1149,13 @@ app.get('/api/countries', async (req, res) => {
     const rawCountries = await prisma.$queryRaw`
       SELECT DISTINCT country
       FROM person
-      WHERE country IS NOT NULL AND country <> ''
+      WHERE country IS NOT NULL 
+      AND country <> ''
+      AND country NOT REGEXP '^[0-9]+$'  -- Exclude entries that are just numbers
       ORDER BY country
     `;
     
     // Create an in-memory map of normalized countries to their variants
-    // This is only for display and grouping purposes, never modifies the database
     const normalizedCountriesMap = new Map();
     
     // Process each country and normalize it
@@ -1158,7 +1163,11 @@ app.get('/api/countries', async (req, res) => {
       const originalCountry = countryObj.country;
       const normalizedCountry = normalizeCountryName(originalCountry);
       
-      if (!normalizedCountry) return; // Skip null countries
+      // Skip null countries, years, and single digits
+      if (!normalizedCountry || /^\d+$/.test(normalizedCountry)) return;
+      
+      // Skip if the normalized country is just whitespace or empty
+      if (!normalizedCountry.trim()) return;
       
       // Use the normalized country as the key
       const key = normalizedCountry;
@@ -1179,10 +1188,20 @@ app.get('/api/countries', async (req, res) => {
     });
     
     // Create the final response array with only the normalized names
-    const uniqueCountries = Array.from(normalizedCountriesMap.values()).map(item => ({
-      country: item.normalized,
-      variants: item.variants.filter(v => v !== item.normalized) // Don't include the normalized name in variants
-    }));
+    const uniqueCountries = Array.from(normalizedCountriesMap.values())
+      .filter(item => {
+        // Additional filtering to ensure we only have valid country names
+        return (
+          item.normalized && 
+          item.normalized.length > 1 && // Skip single characters
+          !/^\d+$/.test(item.normalized) && // Skip pure numbers
+          !/^\s*$/.test(item.normalized) // Skip whitespace
+        );
+      })
+      .map(item => ({
+        country: item.normalized,
+        variants: item.variants.filter(v => v !== item.normalized) // Don't include the normalized name in variants
+      }));
     
     // Sort alphabetically by normalized country name
     res.json(uniqueCountries.sort((a, b) => a.country.localeCompare(b.country)));
@@ -1242,305 +1261,98 @@ app.get('/api/top-actor-countries', async (req, res) => {
 // Dream Team - living cast for best movie
 app.get('/api/dream-team', async (req, res) => {
   try {
-    // Find the best actors (male) with most Oscar wins
-    const topActors = await prisma.person.findMany({
-      where: {
-        nominations: {
-          some: {
-            nomination: {
-              won: true,
-              category: {
-                name: {
-                  contains: 'Actor in a Leading Role'
-                }
-              }
-            }
-          }
-        }
-      },
-      include: {
-        nominations: {
-          include: {
-            nomination: {
-              include: {
-                category: true
-              }
-            }
-          }
-        }
-      },
-      take: 10
-    });
+    // Helper function to get top winners by category
+    async function getTopWinnersByCategory(categoryName, take = 1) {
+      // First get the winners with their win counts
+      const winners = await prisma.$queryRaw`
+        SELECT 
+          p.person_id as id,
+          CONCAT(p.first_name, ' ', COALESCE(p.middle_name, ''), ' ', p.last_name) as name,
+          COUNT(DISTINCT n.nomination_id) as wins
+        FROM person p
+        JOIN nomination_person np ON p.person_id = np.person_id
+        JOIN nomination n ON np.nomination_id = n.nomination_id
+        JOIN category c ON n.category_id = c.category_id
+        WHERE n.won = true
+        AND c.category_name = ${categoryName}
+        GROUP BY p.person_id, p.first_name, p.middle_name, p.last_name
+        ORDER BY wins DESC, p.last_name ASC
+        LIMIT ${take}
+      `;
+      
+      console.log(`Query results for ${categoryName}:`, winners);
+      return winners;
+    }
 
-    // Find the best actresses (female) with most Oscar wins
-    const topActresses = await prisma.person.findMany({
-      where: {
-        nominations: {
-          some: {
-            nomination: {
-              won: true,
-              category: {
-                name: {
-                  contains: 'Actress in a Leading Role'
-                }
-              }
-            }
-          }
-        }
-      },
-      include: {
-        nominations: {
-          include: {
-            nomination: {
-              include: {
-                category: true
-              }
-            }
-          }
-        }
-      },
-      take: 10
-    });
+    // Get top winners for each category
+    const [
+      directors,
+      actors,
+      actresses,
+      supportingActors,
+      supportingActresses,
+      producers,
+      composers
+    ] = await Promise.all([
+      getTopWinnersByCategory('Best Director'),
+      getTopWinnersByCategory('Best Actor'),
+      getTopWinnersByCategory('Best Actress'),
+      getTopWinnersByCategory('Best Supporting Actor'),
+      getTopWinnersByCategory('Best Supporting Actress'),
+      getTopWinnersByCategory('Best Picture'),
+      getTopWinnersByCategory('Best Original Score')
+    ]);
 
-    // Find the best supporting actors (male) with most Oscar wins
-    const topSupportingActors = await prisma.person.findMany({
-      where: {
-        nominations: {
-          some: {
-            nomination: {
-              won: true,
-              category: {
-                name: {
-                  contains: 'Actor in a Supporting Role'
-                }
-              }
-            }
-          }
-        }
-      },
-      include: {
-        nominations: {
-          include: {
-            nomination: {
-              include: {
-                category: true
-              }
-            }
-          }
-        }
-      },
-      take: 10
-    });
-
-    // Find the best supporting actresses (female) with most Oscar wins
-    const topSupportingActresses = await prisma.person.findMany({
-      where: {
-        nominations: {
-          some: {
-            nomination: {
-              won: true,
-              category: {
-                name: {
-                  contains: 'Actress in a Supporting Role'
-                }
-              }
-            }
-          }
-        }
-      },
-      include: {
-        nominations: {
-          include: {
-            nomination: {
-              include: {
-                category: true
-              }
-            }
-          }
-        }
-      },
-      take: 10
-    });
-
-    // Calculate wins for each person
-    const actorsWithWins = topActors.map(actor => ({
-      ...actor,
-      wins: actor.nominations.filter(n => n.nomination.won).length
-    }));
-
-    const actressesWithWins = topActresses.map(actress => ({
-      ...actress,
-      wins: actress.nominations.filter(n => n.nomination.won).length
-    }));
-
-    const supportingActorsWithWins = topSupportingActors.map(actor => ({
-      ...actor,
-      wins: actor.nominations.filter(n => n.nomination.won).length
-    }));
-
-    const supportingActressesWithWins = topSupportingActresses.map(actress => ({
-      ...actress,
-      wins: actress.nominations.filter(n => n.nomination.won).length
-    }));
-
-    // Sort by number of wins
-    const sortedActors = actorsWithWins.sort((a, b) => b.wins - a.wins);
-    const sortedActresses = actressesWithWins.sort((a, b) => b.wins - a.wins);
-    const sortedSupportingActors = supportingActorsWithWins.sort((a, b) => b.wins - a.wins);
-    const sortedSupportingActresses = supportingActressesWithWins.sort((a, b) => b.wins - a.wins);
-
-    // Find directors
-    const directors = await prisma.person.findMany({
-      where: {
-        movieCrew: {
-          some: {
-            position: {
-              title: 'Director'
-            }
-          }
-        }
-      },
-      include: {
-        nominations: {
-          include: {
-            nomination: {
-              include: {
-                category: true
-              }
-            }
-          }
-        }
-      },
-      take: 5
-    });
-
-    // Calculate wins for directors
-    const directorsWithWins = directors.map(director => ({
-      ...director,
-      wins: director.nominations.filter(n => n.nomination.won).length
-    }));
-
-    // Sort directors by wins
-    const sortedDirectors = directorsWithWins.sort((a, b) => b.wins - a.wins);
-
-    // Find producers
-    const producers = await prisma.person.findMany({
-      where: {
-        movieCrew: {
-          some: {
-            position: {
-              title: 'Producer'
-            }
-          }
-        }
-      },
-      include: {
-        nominations: {
-          include: {
-            nomination: {
-              include: {
-                category: true
-              }
-            }
-          }
-        }
-      },
-      take: 5
-    });
-
-    // Calculate wins for producers
-    const producersWithWins = producers.map(producer => ({
-      ...producer,
-      wins: producer.nominations.filter(n => n.nomination.won).length
-    }));
-
-    // Sort producers by wins
-    const sortedProducers = producersWithWins.sort((a, b) => b.wins - a.wins);
-
-    // Find composers
-    const composers = await prisma.person.findMany({
-      where: {
-        movieCrew: {
-          some: {
-            position: {
-              title: 'Composer'
-            }
-          }
-        }
-      },
-      include: {
-        nominations: {
-          include: {
-            nomination: {
-              include: {
-                category: true
-              }
-            }
-          }
-        }
-      },
-      take: 5
-    });
-
-    // Calculate wins for composers
-    const composersWithWins = composers.map(composer => ({
-      ...composer,
-      wins: composer.nominations.filter(n => n.nomination.won).length
-    }));
-
-    // Sort composers by wins
-    const sortedComposers = composersWithWins.sort((a, b) => b.wins - a.wins);
-
-    // Format the data
+    // Construct dream team
     const dreamTeam = [
-      {
-        id: sortedDirectors[0]?.id || 0,
-        name: sortedDirectors[0] ? `${sortedDirectors[0].firstName} ${sortedDirectors[0].lastName}` : 'Unknown Director',
+      { 
+        id: directors[0]?.id || 0,
+        name: directors[0]?.name || 'Unknown Director',
         role: 'Director',
-        oscars: sortedDirectors[0]?.wins || 0
+        oscars: directors[0]?.wins || 0
       },
       {
-        id: sortedActors[0]?.id || 0,
-        name: sortedActors[0] ? `${sortedActors[0].firstName} ${sortedActors[0].lastName}` : 'Unknown Actor',
+        id: actors[0]?.id || 0,
+        name: actors[0]?.name || 'Unknown Actor',
         role: 'Leading Actor',
-        oscars: sortedActors[0]?.wins || 0
+        oscars: actors[0]?.wins || 0
       },
       {
-        id: sortedActresses[0]?.id || 0,
-        name: sortedActresses[0] ? `${sortedActresses[0].firstName} ${sortedActresses[0].lastName}` : 'Unknown Actress',
+        id: actresses[0]?.id || 0,
+        name: actresses[0]?.name || 'Unknown Actress',
         role: 'Leading Actress',
-        oscars: sortedActresses[0]?.wins || 0
+        oscars: actresses[0]?.wins || 0
       },
       {
-        id: sortedSupportingActors[0]?.id || 0,
-        name: sortedSupportingActors[0] ? `${sortedSupportingActors[0].firstName} ${sortedSupportingActors[0].lastName}` : 'Unknown Supporting Actor',
+        id: supportingActors[0]?.id || 0,
+        name: supportingActors[0]?.name || 'Unknown Supporting Actor',
         role: 'Supporting Actor',
-        oscars: sortedSupportingActors[0]?.wins || 0
+        oscars: supportingActors[0]?.wins || 0
       },
       {
-        id: sortedSupportingActresses[0]?.id || 0,
-        name: sortedSupportingActresses[0] ? `${sortedSupportingActresses[0].firstName} ${sortedSupportingActresses[0].lastName}` : 'Unknown Supporting Actress',
+        id: supportingActresses[0]?.id || 0,
+        name: supportingActresses[0]?.name || 'Unknown Supporting Actress',
         role: 'Supporting Actress',
-        oscars: sortedSupportingActresses[0]?.wins || 0
+        oscars: supportingActresses[0]?.wins || 0
       },
       {
-        id: sortedProducers[0]?.id || 0,
-        name: sortedProducers[0] ? `${sortedProducers[0].firstName} ${sortedProducers[0].lastName}` : 'Unknown Producer',
+        id: producers[0]?.id || 0,
+        name: producers[0]?.name || 'Unknown Producer',
         role: 'Producer',
-        oscars: sortedProducers[0]?.wins || 0
+        oscars: producers[0]?.wins || 0
       },
       {
-        id: sortedComposers[0]?.id || 0,
-        name: sortedComposers[0] ? `${sortedComposers[0].firstName} ${sortedComposers[0].lastName}` : 'Unknown Composer',
+        id: composers[0]?.id || 0,
+        name: composers[0]?.name || 'Unknown Composer',
         role: 'Composer',
-        oscars: sortedComposers[0]?.wins || 0
+        oscars: composers[0]?.wins || 0
       }
     ];
 
     res.json({ dreamTeam });
   } catch (error) {
-    console.error('Error fetching dream team:', error);
-    res.status(500).json({ error: 'Failed to fetch dream team data' });
+    console.error('Error getting dream team:', error);
+    res.status(500).json({ error: 'Failed to get dream team' });
   }
 });
 
@@ -1551,13 +1363,15 @@ app.get('/api/top-production-companies', async (req, res) => {
       SELECT 
         pc.pd_id as id,
         pc.company_name as name,
-        COUNT(DISTINCT CASE WHEN n.won = 1 THEN n.nomination_id END) as oscars_won
+        COUNT(DISTINCT n.nomination_id) as oscars_won
       FROM production_company pc
       JOIN movie_produced_by mpb ON pc.pd_id = mpb.pd_id
       JOIN movie m ON mpb.movie_id = m.movie_id
       JOIN nomination n ON m.movie_id = n.movie_id
       WHERE n.won = 1
-      GROUP BY pc.pd_id
+      AND pc.company_name IS NOT NULL
+      AND pc.company_name != ''
+      GROUP BY pc.pd_id, pc.company_name
       ORDER BY oscars_won DESC
       LIMIT 5
     `;
@@ -2238,6 +2052,21 @@ app.get('/api/movie-crew-raw', async (req, res) => {
   } catch (error) {
     console.error('Get movie crew query error (Raw SQL):', error);
     res.status(500).json({ error: 'Failed to fetch movie crew via raw SQL' });
+  }
+});
+
+// Debug endpoint to check category names
+app.get('/api/debug/categories', async (req, res) => {
+  try {
+    const categories = await prisma.$queryRaw`
+      SELECT DISTINCT category_name
+      FROM category
+      ORDER BY category_name
+    `;
+    res.json(categories);
+  } catch (error) {
+    console.error('Debug categories error:', error);
+    res.status(500).json({ error: 'Failed to fetch categories' });
   }
 });
 
