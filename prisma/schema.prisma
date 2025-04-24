@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model AwardEdition {
+  id                   Int                  @id @default(autoincrement()) @map("award_edition_id")
+  edition              Int
+  year                 Int?                 @map("aYear") @db.Year
+  date                 DateTime?            @map("cDate") @db.Date
+  venueId              Int?                 @map("venue_id")
+  duration             Int?
+  network              String?              @db.VarChar(50)
+  venue                Venue?               @relation(fields: [venueId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_awardedition_venue")
+  award_edition_person AwardEditionPerson[]
+  nominations          Nomination[]
+
+  @@index([venueId], map: "idx_award_venue")
+  @@map("award_edition")
+}
+
+model AwardEditionPerson {
+  award_edition_id Int
+  personId         Int          @map("person_id")
+  positionId       Int          @map("position_id")
+  award_edition    AwardEdition @relation(fields: [award_edition_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aep__award_edition")
+  person           Person       @relation(fields: [personId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_awardedition_person_person")
+  position         Position     @relation(fields: [positionId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_awardediton_position_positon")
+
+  @@id([award_edition_id, personId, positionId])
+  @@index([personId], map: "idx_aep_person")
+  @@index([positionId], map: "idx_aep_position")
+  @@map("award_edition_person")
+}
+
+model Category {
+  id          Int          @id @default(autoincrement()) @map("category_id")
+  name        String       @map("category_name") @db.VarChar(255)
+  nominations Nomination[]
+
+  @@map("category")
+}
+
+model Movie {
+  id           Int                @id @default(autoincrement()) @map("movie_id")
+  name         String             @map("movie_name") @db.VarChar(255)
+  runTime      Int?               @map("run_time")
+  countries    MovieCountry[]
+  crew         MovieCrew[]
+  languages    MovieLanguage[]
+  producers    MovieProducedBy[]
+  releaseDates MovieReleaseDate[]
+  nominations  Nomination[]
+
+  @@map("movie")
+}
+
+model MovieCountry {
+  movieId Int    @map("movie_id")
+  country String @db.VarChar(50)
+  movie   Movie  @relation(fields: [movieId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_movie_country")
+
+  @@id([movieId, country])
+  @@map("movie_country")
+}
+
+model MovieCrew {
+  movieId    Int      @map("movie_id")
+  personId   Int      @map("person_id")
+  positionId Int      @map("position_id")
+  movie      Movie    @relation(fields: [movieId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_moviecrew_movie")
+  person     Person   @relation(fields: [personId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_moviecrew_person")
+  position   Position @relation(fields: [positionId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_moviecrew_position")
+
+  @@id([movieId, personId, positionId])
+  @@index([personId], map: "idx_movie_crew__person")
+  @@index([positionId], map: "idx_movie_crew__position")
+  @@map("movie_crew")
+}
+
+model MovieLanguage {
+  movieId  Int    @map("movie_id")
+  language String @map("in_language") @db.VarChar(50)
+  movie    Movie  @relation(fields: [movieId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_movie_lang")
+
+  @@id([movieId, language])
+  @@map("movie_language")
+}
+
+model MovieProducedBy {
+  movieId               Int               @map("movie_id")
+  production_company_id Int
+  movie                 Movie             @relation(fields: [movieId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_mov_id")
+  production_company    ProductionCompany @relation(fields: [production_company_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_mpb__production_company")
+
+  @@id([movieId, production_company_id])
+  @@index([production_company_id], map: "idx_mpb__pc")
+  @@map("movie_produced_by")
+}
+
+model MovieReleaseDate {
+  movieId     Int      @map("movie_id")
+  releaseDate DateTime @map("release_date") @db.Date
+  movie       Movie    @relation(fields: [movieId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_movie_release")
+
+  @@id([movieId, releaseDate])
+  @@map("movie_release_date")
+}
+
+model Nomination {
+  id             Int                @id @default(autoincrement()) @map("nomination_id")
+  awardEditionId Int                @map("award_edition_id")
+  movieId        Int                @map("movie_id")
+  categoryId     Int                @map("category_id")
+  won            Boolean
+  submittedBy    String?            @map("submitted_by") @db.VarChar(255)
+  awardEdition   AwardEdition       @relation(fields: [awardEditionId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_awardedition_award")
+  category       Category           @relation(fields: [categoryId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_category_id")
+  movie          Movie              @relation(fields: [movieId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_movie_id")
+  user           User?              @relation(fields: [submittedBy], references: [email], onDelete: NoAction, onUpdate: NoAction, map: "fk_user_submission")
+  persons        NominationPerson[]
+
+  @@index([awardEditionId], map: "idx_nom__award")
+  @@index([categoryId], map: "idx_nom__cat")
+  @@index([movieId], map: "idx_nom__movie")
+  @@index([submittedBy], map: "idx_nom__user")
+  @@map("nomination")
+}
+
+model NominationPerson {
+  nominationId Int        @map("nomination_id")
+  personId     Int        @map("person_id")
+  nomination   Nomination @relation(fields: [nominationId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_nomination_id")
+  person       Person     @relation(fields: [personId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_person_id")
+
+  @@id([nominationId, personId])
+  @@index([personId], map: "idx_np__person")
+  @@map("nomination_person")
+}
+
+model Person {
+  id            Int                  @id @default(autoincrement()) @map("person_id")
+  firstName     String               @map("first_name") @db.VarChar(100)
+  middleName    String?              @map("middle_name") @db.VarChar(100)
+  lastName      String               @map("last_name") @db.VarChar(100)
+  birthDate     DateTime?            @map("birthDate") @db.Date
+  country       String?              @db.VarChar(100)
+  deathDate     DateTime?            @map("deathDate") @db.Date
+  awardEditions AwardEditionPerson[]
+  movieCrew     MovieCrew[]
+  nominations   NominationPerson[]
+
+  @@map("person")
+}
+
+model Position {
+  id            Int                  @id @default(autoincrement()) @map("position_id")
+  title         String               @db.VarChar(255)
+  awardEditions AwardEditionPerson[]
+  movieCrew     MovieCrew[]
+
+  @@map("positions")
+}
+
+model ProductionCompany {
+  id                Int               @id @default(autoincrement()) @map("pd_id")
+  name              String            @unique(map: "uq_pc__company_name") @map("company_name") @db.VarChar(100)
+  movie_produced_by MovieProducedBy[]
+
+  @@map("production_company")
+}
+
+model User {
+  email           String       @id @db.VarChar(255)
+  username        String       @db.VarChar(50)
+  hashed_password String?      @db.VarChar(60)
+  gender          String       @db.Char(1)
+  birthdate       DateTime     @db.Date
+  country         String?      @db.VarChar(100)
+  nominations     Nomination[]
+
+  @@map("users")
+}
+
+model Venue {
+  id            Int            @id @default(autoincrement()) @map("venue_id")
+  name          String         @map("venue_name") @db.VarChar(60)
+  neighborhood  String?        @db.VarChar(100)
+  city          String?        @db.VarChar(100)
+  state         String?        @default("California") @db.VarChar(100)
+  country       String?        @default("U.S.") @db.VarChar(100)
+  awardEditions AwardEdition[]
+
+  @@map("venue")
+}

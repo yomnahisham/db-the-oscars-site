@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: academy-awards-explorer
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: DATABASE_URL
+        value: mysql://admin:Ohtobeloved9@database-mysql.cre8ag8cwsfq.eu-north-1.rds.amazonaws.com:3306/academy_awards 
