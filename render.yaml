@@ -2,9 +2,11 @@ services:
   - type: web
     name: academy-awards-explorer
     env: node
-    buildCommand: npm install
-    startCommand: node server.js
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: PORT
         value: 3000
       - key: DATABASE_URL
