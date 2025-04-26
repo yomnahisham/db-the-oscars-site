@@ -84,6 +84,4 @@ Feel free to submit issues and enhancement requests!
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Author
-
-Yomna Othman - CSCE2501 
+**This project was done for CSCE2501 (Fundamentals of Database Managment Systems) Course Project**
